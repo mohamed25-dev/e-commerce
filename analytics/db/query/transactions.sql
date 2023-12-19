@@ -41,5 +41,6 @@ SELECT
 	COUNT(id) as total_transactions
 FROM transactions
 GROUP BY customer_id, customer_name
+ORDER BY total_price DESC
 LIMIT $1;
 

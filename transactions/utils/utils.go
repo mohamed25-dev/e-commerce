@@ -32,7 +32,6 @@ func Float32ToPgNumeric(f float32) (pgtype.Numeric, error) {
 		fmt.Println("scanning error, err: ", err)
 		return pgtype.Numeric{}, err
 	}
-	fmt.Println("val >>>>>>> ", strValue)
 
 	return val, nil
 }

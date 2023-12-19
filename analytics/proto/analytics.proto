@@ -16,7 +16,7 @@ service AnalticsService {
 message StreamTotalSalesResponse {
     float total_amount = 1;
     int32 total_quantity = 2;
-    float number_of_transactions = 3;
+    int32 number_of_transactions = 3;
 }
 
 message StreamSalesByProductRequest {

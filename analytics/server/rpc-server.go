@@ -81,6 +81,17 @@ func (s *AnalyticsServer) CreateAnalyticsTransaction(ctx context.Context, req *r
 }
 
 func (s *AnalyticsServer) StreamTotalSales(empty *rpc.EmptyRequest, stream rpc.AnalticsService_StreamTotalSalesServer) error {
+	totalSales, err := s.service.Queries.GetTotalSales(context.Background())
+	if err != nil {
+		fmt.Println("something went wrong wile retrieving data, err: ", err)
+		return err
+	}
+
+	err = streamTotalSales(&totalSales, stream)
+	if err != nil {
+		fmt.Println("something went wrong wile streaming data, err: ", err)
+		return err
+	}
 
 	s.mu.Lock()
 	ch := make(chan *db.GetTotalSalesRow)
@@ -101,22 +112,9 @@ func (s *AnalyticsServer) StreamTotalSales(empty *rpc.EmptyRequest, stream rpc.A
 			break
 		}
 
-		//TODO: enhance the mapping by creating a separate package for it
-		amountString := totalSales.TotalPrice.Int.String()
-		amount, err := strconv.Atoi(amountString)
+		err := streamTotalSales(totalSales, stream)
 		if err != nil {
-			log.Println("Something went wrong while converting string to number, err: ", err)
-			return err
-		}
-
-		err = stream.SendMsg(&rpc.StreamTotalSalesResponse{
-			TotalQuantity:        int32(totalSales.TotalQuantity),
-			TotalAmount:          float32(amount),
-			NumberOfTransactions: float32(totalSales.TotalTransactions),
-		})
-
-		if err != nil {
-			fmt.Println("something went wrong while sending the message, err: ", err)
+			fmt.Println("something went wrong while streaming data, err: ", err)
 			return err
 		}
 
@@ -126,6 +124,16 @@ func (s *AnalyticsServer) StreamTotalSales(empty *rpc.EmptyRequest, stream rpc.A
 }
 
 func (s *AnalyticsServer) StreamSalesByProduct(req *rpc.StreamSalesByProductRequest, stream rpc.AnalticsService_StreamSalesByProductServer) error {
+	salesByProduct, err := s.service.Queries.GetTotalSalesByProductId(context.Background(), req.ProductId)
+	if err != nil {
+		fmt.Println("fetching sales by product from DB failed, err: ", err)
+	}
+
+	err = streamSalesByProduct(req.ProductId, &salesByProduct, stream)
+	if err != nil {
+		return err
+	}
+
 	s.mu.Lock()
 	ch := make(chan *db.GetTotalSalesByProductIdRow)
 	s.salesByProductStreams[ch] = struct{}{}
@@ -145,31 +153,23 @@ func (s *AnalyticsServer) StreamSalesByProduct(req *rpc.StreamSalesByProductRequ
 			break
 		}
 
-		amount, err := utils.PgNumericToFloat32(salesByProduct.TotalPrice)
-		if err != nil {
-			return err
-		}
-
-		// stream only if the request product id matches the created transaction product id
-		if salesByProduct.ProductID == req.ProductId {
-			err = stream.SendMsg(&rpc.StreamSalesByProductResponse{
-				ProductId:     salesByProduct.ProductID,
-				ProductName:   "Pixel 8", //TODO: remove hardcoded value after adding missing db columns
-				SalesQuantity: int32(salesByProduct.TotalQuantity),
-				SalesAmount:   float32(amount),
-			})
-
-			if err != nil {
-				fmt.Println("something went wrong while sending the message, err: ", err)
-				return err
-			}
-		}
+		streamSalesByProduct(req.ProductId, salesByProduct, stream)
 	}
 
 	return nil
 }
 
 func (s *AnalyticsServer) StreamTopCustomers(req *rpc.EmptyRequest, stream rpc.AnalticsService_StreamTopCustomersServer) error {
+	fetchedTopCustomers, err := s.service.Queries.GetTopCustomers(context.Background(), 5)
+	if err != nil {
+		fmt.Println("fetching top customer from DB failed, err: ", err)
+	}
+
+	err = streamTopCustomers(&fetchedTopCustomers, stream)
+	if err != nil {
+		fmt.Println("error while streaming data, err: ", err)
+	}
+
 	s.mu.Lock()
 	ch := make(chan *[]db.GetTopCustomersRow)
 	s.topCustomerStreams[ch] = struct{}{}
@@ -183,34 +183,87 @@ func (s *AnalyticsServer) StreamTopCustomers(req *rpc.EmptyRequest, stream rpc.A
 	}()
 
 	for {
-		topCustomers, ok := <-ch
+		receivedTopCustomers, ok := <-ch
 		if !ok {
 			fmt.Println("channel is no longer available !!")
 			break
 		}
 
-		var customers []*rpc.TopCustomer
-		for _, customer := range *topCustomers {
-			totalPrice, err := utils.PgNumericToFloat32(customer.TotalPrice)
-			if err != nil {
-				return err
-			}
+		err := streamTopCustomers(receivedTopCustomers, stream)
+		if err != nil {
+			fmt.Println("error while streaming data, err: ", err)
+		}
+	}
 
-			customers = append(customers, &rpc.TopCustomer{
-				CustomerId:          customer.CustomerID,
-				CustomerName:        customer.CustomerName,
-				NumerOfTransactions: int32(customer.TotalQuantity),
-				SalesAmount:         totalPrice,
-			})
+	return nil
+}
+
+func streamTopCustomers(receivedTopCustomers *[]db.GetTopCustomersRow, stream rpc.AnalticsService_StreamTopCustomersServer) error {
+	var customers []*rpc.TopCustomer
+	for _, customer := range *receivedTopCustomers {
+		totalPrice, err := utils.PgNumericToFloat32(customer.TotalPrice)
+		if err != nil {
+			return nil
 		}
 
-		err := stream.SendMsg(&rpc.StreamTopCustomersResponse{
-			TopCustomers: customers,
+		customers = append(customers, &rpc.TopCustomer{
+			CustomerId:          customer.CustomerID,
+			CustomerName:        customer.CustomerName,
+			NumerOfTransactions: int32(customer.TotalQuantity),
+			SalesAmount:         totalPrice,
 		})
+	}
+
+	err := stream.SendMsg(&rpc.StreamTopCustomersResponse{
+		TopCustomers: customers,
+	})
+	if err != nil {
+		fmt.Println("something went wrong while sending the message, err: ", err)
+		return err
+	}
+
+	return nil
+}
+
+func streamSalesByProduct(productId string, salesByProduct *db.GetTotalSalesByProductIdRow, stream rpc.AnalticsService_StreamSalesByProductServer) error {
+	amount, err := utils.PgNumericToFloat32(salesByProduct.TotalPrice)
+	if err != nil {
+		return err
+	}
+
+	// stream only if the request product id matches the created transaction product id
+	if salesByProduct.ProductID == productId {
+		err = stream.SendMsg(&rpc.StreamSalesByProductResponse{
+			ProductId:     salesByProduct.ProductID,
+			ProductName:   salesByProduct.ProductName,
+			SalesQuantity: int32(salesByProduct.TotalQuantity),
+			SalesAmount:   float32(amount),
+		})
+
 		if err != nil {
 			fmt.Println("something went wrong while sending the message, err: ", err)
 			return err
 		}
+	}
+
+	return err
+}
+
+func streamTotalSales(totalSales *db.GetTotalSalesRow, stream rpc.AnalticsService_StreamTotalSalesServer) error {
+	amount, err := utils.PgNumericToFloat32(totalSales.TotalPrice)
+	if err != nil {
+		return err
+	}
+
+	err = stream.SendMsg(&rpc.StreamTotalSalesResponse{
+		TotalQuantity:        int32(totalSales.TotalQuantity),
+		TotalAmount:          amount,
+		NumberOfTransactions: int32(totalSales.TotalTransactions),
+	})
+
+	if err != nil {
+		fmt.Println("something went wrong while sending the message, err: ", err)
+		return err
 	}
 
 	return nil
