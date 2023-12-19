@@ -1,0 +1,73 @@
+syntax="proto3";
+import "google/protobuf/timestamp.proto";
+
+package proto;
+option go_package = "./proto";
+
+service AnalticsService {
+    rpc UpdateAnalytics(UpdateAnalyticsRequest) returns (UpdateAnalyticsResponse);
+    rpc CreateAnalyticsTransaction(CreateAnalyticsTransactionRequest) returns (CreateAnaltyicsTransactionResponse);
+    rpc StreamTotalSales(EmptyRequest) returns (stream StreamTotalSalesResponse);
+    rpc StreamTopCustomer(EmptyRequest) returns (stream StreamTotalSalesResponse);
+    rpc StreamSalesByProduct(StreamSalesByProductRequest) returns (stream StreamSalesByProductResponse);
+}
+
+
+message StreamTotalSalesResponse {
+    float total_amount = 1;
+    int32 total_quantity = 2;
+    float number_of_transactions = 3;
+}
+
+message StreamSalesByProductRequest {
+    string product_id = 1;
+}
+
+message StreamSalesByProductResponse {
+    string product_id = 1;
+    string product_name = 2;
+    int32 sales_quantity = 3;
+    float sales_amount = 4;
+}
+
+// TODO: complete this
+message StreamTopCustomersResponse {
+    float total_amount = 1;
+    int32 total_quantity = 2;
+    float number_of_transactions = 3;
+}
+
+message AnalyticsTransaction {
+    string id = 1;
+    float total_amount = 2;
+    string customer_id = 3;
+    string product_id = 4;
+    int32 quantity = 5;
+    google.protobuf.Timestamp created_at = 7;
+}
+
+message CreateAnalyticsTransactionRequest {
+    string customer_id = 1;
+    string customer_name = 2;
+    string product_id = 3;
+    string product_name = 4;
+    int32 quantity = 5;
+    float total_amount = 6;
+}
+
+message CreateAnaltyicsTransactionResponse {
+    AnalyticsTransaction transaction = 1;
+}
+
+message UpdateAnalyticsRequest {
+    float total_amount = 2;
+    string customer_id = 3;
+    string product_id = 4;
+    int32 quantity = 5;
+}
+
+message UpdateAnalyticsResponse {
+    AnalyticsTransaction transaction = 1;
+}
+
+message EmptyRequest {}

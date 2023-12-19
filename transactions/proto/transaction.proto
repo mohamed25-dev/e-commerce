@@ -1,0 +1,44 @@
+syntax="proto3";
+import "google/protobuf/timestamp.proto";
+
+package proto;
+option go_package = "./proto";
+
+service TransactionService {
+    rpc GetTransactionById(GetTransactionByIdRequest) returns (GetTransactionByIdResponse);
+    rpc CreateTransaction(CreateTransactionRequest) returns (CreateTransactionResponse);
+    rpc StreamTransactions(Empty) returns (stream StreamTransactionResponse);
+}
+
+message Transaction {
+    string id = 1;
+    float total_amount = 2;
+    string customer_id = 3;
+    string product_id = 4;
+    int32 quantity = 5;
+    google.protobuf.Timestamp created_at = 6;
+}
+
+message GetTransactionByIdRequest {
+    string id = 1;
+}
+
+message GetTransactionByIdResponse {
+    Transaction transaction = 1;
+}
+
+message CreateTransactionRequest {
+    string customer_id = 1;
+    string product_id = 2;
+    int32 quantity = 3;
+}
+
+message CreateTransactionResponse {
+    Transaction transaction = 1;
+}
+
+message StreamTransactionResponse {
+    Transaction transaction = 1;
+}
+
+message Empty {}
