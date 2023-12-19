@@ -8,7 +8,7 @@ service AnalticsService {
     rpc UpdateAnalytics(UpdateAnalyticsRequest) returns (UpdateAnalyticsResponse);
     rpc CreateAnalyticsTransaction(CreateAnalyticsTransactionRequest) returns (CreateAnaltyicsTransactionResponse);
     rpc StreamTotalSales(EmptyRequest) returns (stream StreamTotalSalesResponse);
-    rpc StreamTopCustomer(EmptyRequest) returns (stream StreamTotalSalesResponse);
+    rpc StreamTopCustomers(EmptyRequest) returns (stream StreamTopCustomersResponse);
     rpc StreamSalesByProduct(StreamSalesByProductRequest) returns (stream StreamSalesByProductResponse);
 }
 
@@ -30,12 +30,16 @@ message StreamSalesByProductResponse {
     float sales_amount = 4;
 }
 
+message TopCustomer {
+    string customer_id = 1;
+    string customer_name = 2;
+    int32 numer_of_transactions = 3;
+    float sales_amount = 4;
+}
 // TODO: complete this
 message StreamTopCustomersResponse {
-    float total_amount = 1;
-    int32 total_quantity = 2;
-    float number_of_transactions = 3;
-}
+    repeated TopCustomer top_customers = 1;
+}  
 
 message AnalyticsTransaction {
     string id = 1;

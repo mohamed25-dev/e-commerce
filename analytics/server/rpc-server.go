@@ -5,16 +5,27 @@ import (
 	db "ecommerce/analytics/db/sqlc"
 	rpc "ecommerce/analytics/proto"
 	"ecommerce/analytics/service"
+	"ecommerce/transactions/utils"
 	"fmt"
 	"log"
 	"strconv"
 	"sync"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/grpc"
 )
 
-func InitAnalyticsRpcServer(service *service.AnalyticsService, totalSalesStreams map[chan *db.GetTotalSalesRow]struct{}, topCustomerStreams map[chan string]struct{}, salesByProductStreams map[chan *db.GetTotalSalesByProductIdRow]struct{}) *grpc.Server {
+type AnalyticsServer struct {
+	rpc.UnimplementedAnalticsServiceServer
+	service *service.AnalyticsService
+	// NOTE: creating two different mutexes might be a good idea,
+	// as it will reduce the blocked code area for each mutex
+	mu                    sync.Mutex
+	topCustomerStreams    map[chan *[]db.GetTopCustomersRow]struct{}
+	totalSalesStreams     map[chan *db.GetTotalSalesRow]struct{}
+	salesByProductStreams map[chan *db.GetTotalSalesByProductIdRow]struct{}
+}
+
+func InitAnalyticsRpcServer(service *service.AnalyticsService, totalSalesStreams map[chan *db.GetTotalSalesRow]struct{}, topCustomerStreams map[chan *[]db.GetTopCustomersRow]struct{}, salesByProductStreams map[chan *db.GetTotalSalesByProductIdRow]struct{}) *grpc.Server {
 	grpcServer := grpc.NewServer()
 
 	analyticServer := &AnalyticsServer{
@@ -28,22 +39,9 @@ func InitAnalyticsRpcServer(service *service.AnalyticsService, totalSalesStreams
 	return grpcServer
 }
 
-type AnalyticsServer struct {
-	rpc.UnimplementedAnalticsServiceServer
-	service *service.AnalyticsService
-	// NOTE: creating two different mutexes might be a good idea,
-	// as it will reduce the blocked code area for each mutex
-	mu                    sync.Mutex
-	topCustomerStreams    map[chan string]struct{}
-	totalSalesStreams     map[chan *db.GetTotalSalesRow]struct{}
-	salesByProductStreams map[chan *db.GetTotalSalesByProductIdRow]struct{}
-}
-
 func (s *AnalyticsServer) CreateAnalyticsTransaction(ctx context.Context, req *rpc.CreateAnalyticsTransactionRequest) (*rpc.CreateAnaltyicsTransactionResponse, error) {
-	var totalPrice pgtype.Numeric
-	//TODO: fix conversion issue which happens here.
-	if err := totalPrice.Scan(fmt.Sprintf("%.2f", req.TotalAmount)); err != nil {
-		fmt.Println("scanning error is: ", err)
+	totalPrice, err := utils.Float32ToPgNumeric(req.TotalAmount)
+	if err != nil {
 		return nil, err
 	}
 
@@ -147,11 +145,8 @@ func (s *AnalyticsServer) StreamSalesByProduct(req *rpc.StreamSalesByProductRequ
 			break
 		}
 
-		//TODO: enhance the mapping by creating a separate package for it
-		amountString := salesByProduct.TotalPrice.Int.String()
-		amount, err := strconv.Atoi(amountString)
+		amount, err := utils.PgNumericToFloat32(salesByProduct.TotalPrice)
 		if err != nil {
-			log.Println("Something went wrong while converting string to number, err: ", err)
 			return err
 		}
 
@@ -169,12 +164,53 @@ func (s *AnalyticsServer) StreamSalesByProduct(req *rpc.StreamSalesByProductRequ
 				return err
 			}
 		}
+	}
 
-		fmt.Println("+==============")
-		fmt.Println(req.ProductId)
-		fmt.Println(salesByProduct.ProductID)
-		fmt.Println("+==============")
+	return nil
+}
 
+func (s *AnalyticsServer) StreamTopCustomers(req *rpc.EmptyRequest, stream rpc.AnalticsService_StreamTopCustomersServer) error {
+	s.mu.Lock()
+	ch := make(chan *[]db.GetTopCustomersRow)
+	s.topCustomerStreams[ch] = struct{}{}
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		delete(s.topCustomerStreams, ch)
+		close(ch)
+		s.mu.Unlock()
+	}()
+
+	for {
+		topCustomers, ok := <-ch
+		if !ok {
+			fmt.Println("channel is no longer available !!")
+			break
+		}
+
+		var customers []*rpc.TopCustomer
+		for _, customer := range *topCustomers {
+			totalPrice, err := utils.PgNumericToFloat32(customer.TotalPrice)
+			if err != nil {
+				return err
+			}
+
+			customers = append(customers, &rpc.TopCustomer{
+				CustomerId:          customer.CustomerID,
+				CustomerName:        customer.CustomerName,
+				NumerOfTransactions: int32(customer.TotalQuantity),
+				SalesAmount:         totalPrice,
+			})
+		}
+
+		err := stream.SendMsg(&rpc.StreamTopCustomersResponse{
+			TopCustomers: customers,
+		})
+		if err != nil {
+			fmt.Println("something went wrong while sending the message, err: ", err)
+			return err
+		}
 	}
 
 	return nil

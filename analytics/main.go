@@ -22,7 +22,7 @@ func main() {
 	events := events.New()
 	queries := db.New(pgConn)
 
-	topCustomerStreams := make(map[chan string]struct{})
+	topCustomerStreams := make(map[chan *[]db.GetTopCustomersRow]struct{})
 	totalSalesStreams := make(map[chan *db.GetTotalSalesRow]struct{})
 	salesByProductStreams := make(map[chan *db.GetTotalSalesByProductIdRow]struct{})
 

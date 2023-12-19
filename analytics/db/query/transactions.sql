@@ -31,3 +31,15 @@ SELECT
 FROM transactions
 WHERE product_id = $1
 GROUP BY product_id, product_name;
+
+-- name: GetTopCustomers :many
+SELECT 
+  customer_id,
+  customer_name,
+	SUM(total_price) as total_price,
+	SUM(quantity) as total_quantity,
+	COUNT(id) as total_transactions
+FROM transactions
+GROUP BY customer_id, customer_name
+LIMIT $1;
+

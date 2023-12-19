@@ -59,6 +59,52 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 	return i, err
 }
 
+const getTopCustomers = `-- name: GetTopCustomers :many
+SELECT 
+  customer_id,
+  customer_name,
+	SUM(total_price) as total_price,
+	SUM(quantity) as total_quantity,
+	COUNT(id) as total_transactions
+FROM transactions
+GROUP BY customer_id, customer_name
+LIMIT $1
+`
+
+type GetTopCustomersRow struct {
+	CustomerID        string
+	CustomerName      string
+	TotalPrice        pgtype.Numeric
+	TotalQuantity     int64
+	TotalTransactions int64
+}
+
+func (q *Queries) GetTopCustomers(ctx context.Context, limit int64) ([]GetTopCustomersRow, error) {
+	rows, err := q.db.Query(ctx, getTopCustomers, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTopCustomersRow
+	for rows.Next() {
+		var i GetTopCustomersRow
+		if err := rows.Scan(
+			&i.CustomerID,
+			&i.CustomerName,
+			&i.TotalPrice,
+			&i.TotalQuantity,
+			&i.TotalTransactions,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTotalSales = `-- name: GetTotalSales :one
 SELECT 
 	COUNT(id) as total_transactions,

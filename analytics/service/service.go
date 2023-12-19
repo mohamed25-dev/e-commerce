@@ -14,7 +14,7 @@ type AnalyticsService struct {
 	Queries               db.Queries
 	EventEmmiter          events.EventEmmiter
 	Mu                    sync.Mutex
-	TopCustomerStreams    map[chan string]struct{}
+	TopCustomerStreams    map[chan *[]db.GetTopCustomersRow]struct{}
 	TotalSalesStreams     map[chan *db.GetTotalSalesRow]struct{}
 	SalesByProductStreams map[chan *db.GetTotalSalesByProductIdRow]struct{}
 }
@@ -40,6 +40,8 @@ func (service *AnalyticsService) CreateTransaction(ctx context.Context, transact
 	return createdTransaction, err
 }
 
+// NOTE: performance of this function can be enhanced by using multiple goroutines to
+// handle the streaming simoltanously
 func (service *AnalyticsService) HandleTransactionCreatedEvent(data ...interface{}) {
 	var createdTransaction db.Transaction
 	var ok bool
@@ -61,10 +63,15 @@ func (service *AnalyticsService) HandleTransactionCreatedEvent(data ...interface
 		return
 	}
 
+	topCustomers, err := service.Queries.GetTopCustomers(context.Background(), 5)
+	if err != nil {
+		fmt.Println("something went wrong while retrieving top customers, err: ", err)
+		return
+	}
+
 	service.Mu.Lock()
-	//TODO: add top top customers stream
 	for ch := range service.TopCustomerStreams {
-		ch <- "Hala Hala"
+		ch <- &topCustomers
 	}
 
 	for ch := range service.TotalSalesStreams {

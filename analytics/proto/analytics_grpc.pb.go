@@ -22,7 +22,7 @@ const (
 	AnalticsService_UpdateAnalytics_FullMethodName            = "/proto.AnalticsService/UpdateAnalytics"
 	AnalticsService_CreateAnalyticsTransaction_FullMethodName = "/proto.AnalticsService/CreateAnalyticsTransaction"
 	AnalticsService_StreamTotalSales_FullMethodName           = "/proto.AnalticsService/StreamTotalSales"
-	AnalticsService_StreamTopCustomer_FullMethodName          = "/proto.AnalticsService/StreamTopCustomer"
+	AnalticsService_StreamTopCustomers_FullMethodName         = "/proto.AnalticsService/StreamTopCustomers"
 	AnalticsService_StreamSalesByProduct_FullMethodName       = "/proto.AnalticsService/StreamSalesByProduct"
 )
 
@@ -33,7 +33,7 @@ type AnalticsServiceClient interface {
 	UpdateAnalytics(ctx context.Context, in *UpdateAnalyticsRequest, opts ...grpc.CallOption) (*UpdateAnalyticsResponse, error)
 	CreateAnalyticsTransaction(ctx context.Context, in *CreateAnalyticsTransactionRequest, opts ...grpc.CallOption) (*CreateAnaltyicsTransactionResponse, error)
 	StreamTotalSales(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (AnalticsService_StreamTotalSalesClient, error)
-	StreamTopCustomer(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (AnalticsService_StreamTopCustomerClient, error)
+	StreamTopCustomers(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (AnalticsService_StreamTopCustomersClient, error)
 	StreamSalesByProduct(ctx context.Context, in *StreamSalesByProductRequest, opts ...grpc.CallOption) (AnalticsService_StreamSalesByProductClient, error)
 }
 
@@ -95,12 +95,12 @@ func (x *analticsServiceStreamTotalSalesClient) Recv() (*StreamTotalSalesRespons
 	return m, nil
 }
 
-func (c *analticsServiceClient) StreamTopCustomer(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (AnalticsService_StreamTopCustomerClient, error) {
-	stream, err := c.cc.NewStream(ctx, &AnalticsService_ServiceDesc.Streams[1], AnalticsService_StreamTopCustomer_FullMethodName, opts...)
+func (c *analticsServiceClient) StreamTopCustomers(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (AnalticsService_StreamTopCustomersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &AnalticsService_ServiceDesc.Streams[1], AnalticsService_StreamTopCustomers_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &analticsServiceStreamTopCustomerClient{stream}
+	x := &analticsServiceStreamTopCustomersClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -110,17 +110,17 @@ func (c *analticsServiceClient) StreamTopCustomer(ctx context.Context, in *Empty
 	return x, nil
 }
 
-type AnalticsService_StreamTopCustomerClient interface {
-	Recv() (*StreamTotalSalesResponse, error)
+type AnalticsService_StreamTopCustomersClient interface {
+	Recv() (*StreamTopCustomersResponse, error)
 	grpc.ClientStream
 }
 
-type analticsServiceStreamTopCustomerClient struct {
+type analticsServiceStreamTopCustomersClient struct {
 	grpc.ClientStream
 }
 
-func (x *analticsServiceStreamTopCustomerClient) Recv() (*StreamTotalSalesResponse, error) {
-	m := new(StreamTotalSalesResponse)
+func (x *analticsServiceStreamTopCustomersClient) Recv() (*StreamTopCustomersResponse, error) {
+	m := new(StreamTopCustomersResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ type AnalticsServiceServer interface {
 	UpdateAnalytics(context.Context, *UpdateAnalyticsRequest) (*UpdateAnalyticsResponse, error)
 	CreateAnalyticsTransaction(context.Context, *CreateAnalyticsTransactionRequest) (*CreateAnaltyicsTransactionResponse, error)
 	StreamTotalSales(*EmptyRequest, AnalticsService_StreamTotalSalesServer) error
-	StreamTopCustomer(*EmptyRequest, AnalticsService_StreamTopCustomerServer) error
+	StreamTopCustomers(*EmptyRequest, AnalticsService_StreamTopCustomersServer) error
 	StreamSalesByProduct(*StreamSalesByProductRequest, AnalticsService_StreamSalesByProductServer) error
 	mustEmbedUnimplementedAnalticsServiceServer()
 }
@@ -184,8 +184,8 @@ func (UnimplementedAnalticsServiceServer) CreateAnalyticsTransaction(context.Con
 func (UnimplementedAnalticsServiceServer) StreamTotalSales(*EmptyRequest, AnalticsService_StreamTotalSalesServer) error {
 	return status.Errorf(codes.Unimplemented, "method StreamTotalSales not implemented")
 }
-func (UnimplementedAnalticsServiceServer) StreamTopCustomer(*EmptyRequest, AnalticsService_StreamTopCustomerServer) error {
-	return status.Errorf(codes.Unimplemented, "method StreamTopCustomer not implemented")
+func (UnimplementedAnalticsServiceServer) StreamTopCustomers(*EmptyRequest, AnalticsService_StreamTopCustomersServer) error {
+	return status.Errorf(codes.Unimplemented, "method StreamTopCustomers not implemented")
 }
 func (UnimplementedAnalticsServiceServer) StreamSalesByProduct(*StreamSalesByProductRequest, AnalticsService_StreamSalesByProductServer) error {
 	return status.Errorf(codes.Unimplemented, "method StreamSalesByProduct not implemented")
@@ -260,24 +260,24 @@ func (x *analticsServiceStreamTotalSalesServer) Send(m *StreamTotalSalesResponse
 	return x.ServerStream.SendMsg(m)
 }
 
-func _AnalticsService_StreamTopCustomer_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _AnalticsService_StreamTopCustomers_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(EmptyRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(AnalticsServiceServer).StreamTopCustomer(m, &analticsServiceStreamTopCustomerServer{stream})
+	return srv.(AnalticsServiceServer).StreamTopCustomers(m, &analticsServiceStreamTopCustomersServer{stream})
 }
 
-type AnalticsService_StreamTopCustomerServer interface {
-	Send(*StreamTotalSalesResponse) error
+type AnalticsService_StreamTopCustomersServer interface {
+	Send(*StreamTopCustomersResponse) error
 	grpc.ServerStream
 }
 
-type analticsServiceStreamTopCustomerServer struct {
+type analticsServiceStreamTopCustomersServer struct {
 	grpc.ServerStream
 }
 
-func (x *analticsServiceStreamTopCustomerServer) Send(m *StreamTotalSalesResponse) error {
+func (x *analticsServiceStreamTopCustomersServer) Send(m *StreamTopCustomersResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -325,8 +325,8 @@ var AnalticsService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "StreamTopCustomer",
-			Handler:       _AnalticsService_StreamTopCustomer_Handler,
+			StreamName:    "StreamTopCustomers",
+			Handler:       _AnalticsService_StreamTopCustomers_Handler,
 			ServerStreams: true,
 		},
 		{
