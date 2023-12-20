@@ -11,8 +11,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func MapRpcRequestToCreateTransactionModel(req *proto.CreateTransactionRequest) (CreateTransactionData, error) {
-	data := CreateTransactionData{
+func MapRpcRequestToCreateTransactionModel(req *proto.CreateTransactionRequest) (CreateTransactionRequestModel, error) {
+	data := CreateTransactionRequestModel{
 		CustomerID: req.CustomerId,
 		ProductID:  req.ProductId,
 		Quantity:   req.Quantity,
@@ -21,8 +21,8 @@ func MapRpcRequestToCreateTransactionModel(req *proto.CreateTransactionRequest) 
 	return data, nil
 }
 
-func MapTransactionDataToAnalyticsTransaction(transaction CreateTransactionData, product db.Product, customer db.Customer) (CreateAnalyticsTransactionData, error) {
-	data := CreateAnalyticsTransactionData{
+func MapTransactionDataToAnalyticsTransaction(transaction CreateTransactionRequestModel, product db.Product, customer db.Customer) (CreateAnalyticsTransactionRequestModel, error) {
+	data := CreateAnalyticsTransactionRequestModel{
 		CustomerID:   transaction.CustomerID,
 		CustomerName: customer.CustomerName,
 		ProductID:    transaction.ProductID,
@@ -35,7 +35,7 @@ func MapTransactionDataToAnalyticsTransaction(transaction CreateTransactionData,
 	return data, nil
 }
 
-func MapTransactionDataToDbParams(data CreateTransactionData) (db.CreateTransactionParams, error) {
+func MapTransactionDataToDbParams(data CreateTransactionRequestModel) (db.CreateTransactionParams, error) {
 	totalPrice, err := utils.Float32ToPgNumeric(data.TotalPrice)
 	if err != nil {
 		return db.CreateTransactionParams{}, err

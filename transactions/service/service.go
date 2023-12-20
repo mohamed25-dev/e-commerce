@@ -27,7 +27,7 @@ func (service *TransactionsService) GetTransactionById(ctx context.Context, id s
 	return trx, err
 }
 
-func (service *TransactionsService) CreateTransaction(ctx context.Context, transactionData models.CreateTransactionData) (db.Transaction, error) {
+func (service *TransactionsService) CreateTransaction(ctx context.Context, transactionData models.CreateTransactionRequestModel) (db.Transaction, error) {
 	customer, err := service.Queries.GetCustomerById(ctx, transactionData.CustomerID)
 	if err != nil {
 		fmt.Println("retrieving customer info failed, err: ", err)

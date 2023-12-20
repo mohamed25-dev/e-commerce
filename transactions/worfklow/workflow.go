@@ -13,7 +13,7 @@ type TransactionWorkflow struct {
 	Activities *TransactionActivity
 }
 
-func (w *TransactionWorkflow) CreateTransactionWorkflow(ctx workflow.Context, data models.CreateTransactionData, product db.Product, customer db.Customer) (db.Transaction, error) {
+func (w *TransactionWorkflow) CreateTransactionWorkflow(ctx workflow.Context, data models.CreateTransactionRequestModel, product db.Product, customer db.Customer) (db.Transaction, error) {
 	// TODO: use DB transactions, so that we can rollback incase of failure
 	// or use temporal for the same purpose
 	options := workflow.ActivityOptions{

@@ -1,6 +1,6 @@
 package models
 
-type CreateTransactionData struct {
+type CreateTransactionRequestModel struct {
 	ID         string
 	CustomerID string
 	ProductID  string
@@ -8,7 +8,7 @@ type CreateTransactionData struct {
 	Quantity   int32
 }
 
-type CreateAnalyticsTransactionData struct {
+type CreateAnalyticsTransactionRequestModel struct {
 	CustomerID   string
 	CustomerName string
 	ProductID    string

@@ -43,7 +43,7 @@ func (s *TransactionsServer) GetTransactionById(ctx context.Context, req *proto.
 }
 
 func (s *TransactionsServer) CreateTransaction(ctx context.Context, req *proto.CreateTransactionRequest) (*proto.CreateTransactionResponse, error) {
-	transactionData := models.CreateTransactionData{
+	transactionData := models.CreateTransactionRequestModel{
 		CustomerID: req.CustomerId,
 		ProductID:  req.ProductId,
 		Quantity:   req.Quantity,

@@ -14,7 +14,7 @@ type CreateTransactionRequest struct {
 	TotalAmount float32
 }
 
-func CreateAnalyticsTransaction(ctx context.Context, c analyticsrpc.AnalticsServiceClient, createdTransaction models.CreateAnalyticsTransactionData) error {
+func CreateAnalyticsTransaction(ctx context.Context, c analyticsrpc.AnalticsServiceClient, createdTransaction models.CreateAnalyticsTransactionRequestModel) error {
 	requestBody := &analyticsrpc.CreateAnalyticsTransactionRequest{
 		CustomerId:   createdTransaction.CustomerID,
 		CustomerName: createdTransaction.CustomerName,

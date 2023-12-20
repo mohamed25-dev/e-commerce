@@ -17,7 +17,7 @@ type TransactionActivity struct {
 	Queries *db.Queries
 }
 
-func (a *TransactionActivity) CreateTransactionActivity(ctx context.Context, data models.CreateTransactionData) (db.Transaction, error) {
+func (a *TransactionActivity) CreateTransactionActivity(ctx context.Context, data models.CreateTransactionRequestModel) (db.Transaction, error) {
 	transactionParams, err := models.MapTransactionDataToDbParams(data)
 	transactionParams.ID = uuid.NewString()
 
@@ -35,7 +35,7 @@ func (a *TransactionActivity) CreateTransactionActivity(ctx context.Context, dat
 	return createdTransaction, nil
 }
 
-func (a *TransactionActivity) SendTransactionToAnalyticsActivity(ctx context.Context, createdTransaction models.CreateAnalyticsTransactionData) error {
+func (a *TransactionActivity) SendTransactionToAnalyticsActivity(ctx context.Context, createdTransaction models.CreateAnalyticsTransactionRequestModel) error {
 	//TODO: use env variables
 	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
