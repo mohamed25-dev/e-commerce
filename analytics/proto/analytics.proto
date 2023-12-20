@@ -5,7 +5,6 @@ package proto;
 option go_package = "./proto";
 
 service AnalticsService {
-    rpc UpdateAnalytics(UpdateAnalyticsRequest) returns (UpdateAnalyticsResponse);
     rpc CreateAnalyticsTransaction(CreateAnalyticsTransactionRequest) returns (CreateAnaltyicsTransactionResponse);
     rpc StreamTotalSales(EmptyRequest) returns (stream StreamTotalSalesResponse);
     rpc StreamTopCustomers(EmptyRequest) returns (stream StreamTopCustomersResponse);
@@ -60,17 +59,6 @@ message CreateAnalyticsTransactionRequest {
 }
 
 message CreateAnaltyicsTransactionResponse {
-    AnalyticsTransaction transaction = 1;
-}
-
-message UpdateAnalyticsRequest {
-    float total_amount = 2;
-    string customer_id = 3;
-    string product_id = 4;
-    int32 quantity = 5;
-}
-
-message UpdateAnalyticsResponse {
     AnalyticsTransaction transaction = 1;
 }
 

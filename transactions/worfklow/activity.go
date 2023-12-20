@@ -3,9 +3,9 @@ package workflow
 import (
 	"context"
 	analyticsRpc "ecommerce/analytics/proto"
+	rpc "ecommerce/transactions/clients"
 	db "ecommerce/transactions/db/sqlc"
 	"ecommerce/transactions/models"
-	"ecommerce/transactions/rpc"
 	"fmt"
 	"log"
 

@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	server "ecommerce/analytics/api"
 	db "ecommerce/analytics/db/sqlc"
-	"ecommerce/analytics/server"
 	"ecommerce/analytics/service"
 	"ecommerce/transactions/utils"
 	"fmt"

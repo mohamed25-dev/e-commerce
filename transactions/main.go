@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	server "ecommerce/transactions/api"
 	db "ecommerce/transactions/db/sqlc"
 	"ecommerce/transactions/proto"
-	"ecommerce/transactions/server"
 	"ecommerce/transactions/service"
 	"ecommerce/transactions/utils"
 
