@@ -9,6 +9,27 @@ import (
 	"context"
 )
 
+const createCustomer = `-- name: CreateCustomer :one
+INSERT INTO customers (
+    id,
+    customer_name
+) VALUES (
+  $1, $2
+) RETURNING id, customer_name, created_at
+`
+
+type CreateCustomerParams struct {
+	ID           string
+	CustomerName string
+}
+
+func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error) {
+	row := q.db.QueryRow(ctx, createCustomer, arg.ID, arg.CustomerName)
+	var i Customer
+	err := row.Scan(&i.ID, &i.CustomerName, &i.CreatedAt)
+	return i, err
+}
+
 const getCustomerById = `-- name: GetCustomerById :one
 SELECT id, customer_name, created_at FROM customers WHERE id = $1
 `

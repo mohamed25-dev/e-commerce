@@ -7,7 +7,37 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const createProduct = `-- name: CreateProduct :one
+INSERT INTO products (
+    id,
+    product_name,
+    price
+) VALUES (
+  $1, $2, $3
+) RETURNING id, product_name, price, created_at
+`
+
+type CreateProductParams struct {
+	ID          string
+	ProductName string
+	Price       pgtype.Numeric
+}
+
+func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, createProduct, arg.ID, arg.ProductName, arg.Price)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.ProductName,
+		&i.Price,
+		&i.CreatedAt,
+	)
+	return i, err
+}
 
 const getProductById = `-- name: GetProductById :one
 SELECT id, product_name, price, created_at FROM products WHERE id = $1
