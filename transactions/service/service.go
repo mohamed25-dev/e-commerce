@@ -5,7 +5,7 @@ import (
 	db "ecommerce/transactions/db/sqlc"
 	"ecommerce/transactions/models"
 	"ecommerce/transactions/utils"
-	workflow "ecommerce/transactions/worfklow"
+	workflow "ecommerce/transactions/workflow"
 	"fmt"
 	"log"
 
@@ -13,14 +13,14 @@ import (
 )
 
 type TransactionsService struct {
-	Queries        db.Queries
+	Queries        db.Querier
 	TemporalClient client.Client
 }
 
 func (service *TransactionsService) GetTransactionById(ctx context.Context, id string) (db.Transaction, error) {
 	trx, err := service.Queries.GetTransactionById(ctx, id)
 	if err != nil {
-		// check the error type, maybe return transaction not found
+		// TODO: return not found
 		return db.Transaction{}, err
 	}
 
@@ -54,7 +54,7 @@ func (service *TransactionsService) CreateTransaction(ctx context.Context, trans
 	}
 
 	activities := workflow.TransactionActivity{
-		Queries: &service.Queries,
+		Queries: service.Queries,
 	}
 
 	workflow := workflow.TransactionWorkflow{Activities: &activities}

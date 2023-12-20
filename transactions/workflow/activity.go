@@ -14,7 +14,7 @@ import (
 )
 
 type TransactionActivity struct {
-	Queries *db.Queries
+	Queries db.Querier
 }
 
 func (a *TransactionActivity) CreateTransactionActivity(ctx context.Context, data models.CreateTransactionRequestModel) (db.Transaction, error) {

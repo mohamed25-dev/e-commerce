@@ -25,3 +25,9 @@ dropdb:
 	@echo "Droping the database"
 	docker exec -it postgres dropdb --username=postgres ecommerce_db
 	docker exec -it postgres dropdb --username=postgres analytics_db
+
+mockdb:
+	mockgen -package mockdb -destination ./transactions/db/mock/store.go  ecommerce/transactions/db/sqlc Querier
+
+mocktemp:
+	mockgen -package mocktemporal -destination ./transactions/workflow/mock/temporal.go  go.temporal.io/sdk/client Client
