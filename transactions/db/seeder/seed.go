@@ -1,35 +1,45 @@
 package main
 
 import (
-	"database/sql"
+	"context"
+	"ecommerce/transactions/utils"
 	"fmt"
 	"log"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-// TODO: use env variables
-const (
-	dbUser     = "postgres"
-	dbPassword = "password"
-	dbName     = "transactions_db"
-	dbHost     = "localhost"
-	dbPort     = 5432
-)
-
 func main() {
-	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
-		dbUser, dbPassword, dbName, dbHost, dbPort)
+	err := godotenv.Load("transactions/.env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
-	db, err := sql.Open("postgres", connStr)
+	connStr, err := utils.GetDbConnectionString()
+	if err != nil {
+		log.Fatal("could not get DB connection string, err: ", err)
+	}
+
+	fmt.Println(connStr)
+	// Create a connection pool
+	config, err := pgx.ParseConfig(connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
 
-	db.Exec(`delete from transactions where id != '1'`)
+	pool, err := pgx.ConnectConfig(context.Background(), config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close(context.Background())
 
-	_, err = db.Exec(`INSERT INTO public.transactions (id,"created_at", customer_id, product_id,quantity, total_price)
+	pool.Exec(context.Background(), `delete from transactions where id != '1'`)
+	pool.Exec(context.Background(), `delete from products where id != '1'`)
+	pool.Exec(context.Background(), `delete from customers where id != '1'`)
+
+	_, err = pool.Exec(context.Background(), `INSERT INTO transactions (id,"created_at", customer_id, product_id,quantity, total_price)
 		VALUES
 			('123', NOW(), '345', '4324', 8, 452), 
 			('124', NOW(), '345', '5265', 5, 263),
@@ -39,7 +49,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_, err = db.Exec(`INSERT INTO public.customers (id, customer_name)
+	_, err = pool.Exec(context.Background(), `INSERT INTO customers (id, customer_name)
 		VALUES
 			('123','Mohamed Mirghani'),
 			('124','Omer Babiker'), 
@@ -50,7 +60,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_, err = db.Exec(`INSERT INTO public.products (id,product_name,price) 
+	_, err = pool.Exec(context.Background(), `INSERT INTO products (id,product_name,price) 
 		VALUES
 			('123','Pixel 8',1299.00),
 			('124','Galaxy Tab s9', 1499.00),

@@ -273,7 +273,6 @@ func (x *TopCustomer) GetSalesAmount() float32 {
 	return 0
 }
 
-// TODO: complete this
 type StreamTopCustomersResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

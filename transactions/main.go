@@ -3,11 +3,10 @@ package main
 import (
 	"context"
 	db "ecommerce/transactions/db/sqlc"
-	rpc "ecommerce/transactions/proto"
+	"ecommerce/transactions/proto"
 	"ecommerce/transactions/server"
 	"ecommerce/transactions/service"
-
-	// TODO: rename to rpc and rename rpc to proto
+	"ecommerce/transactions/utils"
 
 	workflow "ecommerce/transactions/worfklow"
 	"fmt"
@@ -15,6 +14,7 @@ import (
 	"net"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
@@ -38,21 +38,35 @@ func startTemporalWorker(c client.Client, q *db.Queries) error {
 }
 
 func main() {
-	// DB connection
-	//TODO: use env variables
-	pgConn, err := pgx.Connect(context.Background(), "postgres://postgres:password@localhost:5432/transactions_db")
+	err := godotenv.Load("../transactions/.env")
 	if err != nil {
-		panic(err)
+		log.Fatal("Error loading .env file")
 	}
-	fmt.Println("connected to DB >>>>>>>>>>")
+
+	connStr, err := utils.GetDbConnectionString()
+	if err != nil {
+		log.Fatal("could not get DB connection string, err: ", err)
+	}
+
+	// Create a connection pool
+	config, err := pgx.ParseConfig(connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	pool, err := pgx.ConnectConfig(context.Background(), config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close(context.Background())
+
+	queries := db.New(pool)
 
 	c, err := client.Dial(client.Options{})
 	if err != nil {
 		fmt.Println("Error while connecting to temporal")
 	}
 	defer c.Close()
-
-	queries := db.New(pgConn)
 	go startTemporalWorker(c, queries)
 
 	transactionsService := &service.TransactionsService{Queries: *queries, TemporalClient: c}
@@ -61,7 +75,7 @@ func main() {
 		log.Fatal("failed to listen, error: ", err)
 	}
 
-	streams := make(map[chan *rpc.CreateTransactionResponse]struct{})
+	streams := make(map[chan *proto.CreateTransactionResponse]struct{})
 	grpcServer := server.InitTransactionsRpcServer(transactionsService, &streams)
 
 	if err = grpcServer.Serve(lis); err != nil {

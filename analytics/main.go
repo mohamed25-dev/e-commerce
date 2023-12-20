@@ -5,22 +5,43 @@ import (
 	db "ecommerce/analytics/db/sqlc"
 	"ecommerce/analytics/server"
 	"ecommerce/analytics/service"
+	"ecommerce/transactions/utils"
+	"fmt"
 	"log"
 	"net"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 	"github.com/kataras/go-events"
 )
 
 func main() {
-	//TODO: use env variables
-	pgConn, err := pgx.Connect(context.Background(), "postgres://postgres:password@localhost:5432/analytics_db")
+	err := godotenv.Load("../analytics/.env")
 	if err != nil {
-		panic(err)
+		log.Fatal("Error loading .env file")
 	}
 
+	connStr, err := utils.GetDbConnectionString()
+	if err != nil {
+		log.Fatal("could not get DB connection string, err: ", err)
+	}
+
+	fmt.Println(connStr)
+
+	// Create a connection pool
+	config, err := pgx.ParseConfig(connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	pool, err := pgx.ConnectConfig(context.Background(), config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close(context.Background())
+
 	events := events.New()
-	queries := db.New(pgConn)
+	queries := db.New(pool)
 
 	topCustomerStreams := make(map[chan *[]db.GetTopCustomersRow]struct{})
 	totalSalesStreams := make(map[chan *db.GetTotalSalesRow]struct{})

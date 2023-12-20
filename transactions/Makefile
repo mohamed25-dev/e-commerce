@@ -1,4 +1,5 @@
-DB_URL=postgresql://postgres:password@localhost:5432/transactions_db?sslmode=disable
+# DB_URL=postgresql://postgres:password@localhost:5432/transactions_db?sslmode=disable
+DB_URL=cockroachdb://mohamed:@localhost:9999/transactions_db?sslmode=disable
 
 createdb:
 	@echo "Creating the database"

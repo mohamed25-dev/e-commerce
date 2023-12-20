@@ -36,7 +36,7 @@ message TopCustomer {
     int32 numer_of_transactions = 3;
     float sales_amount = 4;
 }
-// TODO: complete this
+
 message StreamTopCustomersResponse {
     repeated TopCustomer top_customers = 1;
 }  

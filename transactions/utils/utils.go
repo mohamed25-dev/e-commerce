@@ -2,10 +2,24 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+func GetDbConnectionString() (string, error) {
+	user := os.Getenv("DB_USER")
+	dbName := os.Getenv("DB_NAME")
+	host := os.Getenv("DB_HOST")
+	port, err := strconv.Atoi(os.Getenv("DB_PORT"))
+	if err != nil {
+		fmt.Printf("Error parsing port number: %v\n", err)
+		return "", err
+	}
+
+	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable", host, port, user, dbName), nil
+}
 
 func PgNumericToFloat32(pgNumber pgtype.Numeric) (float32, error) {
 	v, err := pgNumber.Value()
