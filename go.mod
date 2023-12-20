@@ -8,6 +8,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/kataras/go-events v0.0.3
 	github.com/lib/pq v1.10.9
+	github.com/stretchr/testify v1.8.4
 	go.temporal.io/sdk v1.25.1
 	google.golang.org/grpc v1.60.0
 	google.golang.org/protobuf v1.31.0
@@ -31,7 +32,6 @@ require (
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
 	go.temporal.io/api v1.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
