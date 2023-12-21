@@ -12,6 +12,11 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
+type TransactionServicer interface {
+	GetTransactionById(ctx context.Context, id string) (db.Transaction, error)
+	CreateTransaction(ctx context.Context, transactionData models.CreateTransactionRequestModel) (db.Transaction, error)
+}
+
 type TransactionsService struct {
 	Queries        db.Querier
 	TemporalClient client.Client

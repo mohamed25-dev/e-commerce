@@ -31,7 +31,6 @@ func MapTransactionDataToAnalyticsTransaction(transaction CreateTransactionReque
 		TotalPrice:   transaction.TotalPrice,
 	}
 
-	fmt.Println(data)
 	return data, nil
 }
 

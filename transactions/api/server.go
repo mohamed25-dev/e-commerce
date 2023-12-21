@@ -1,4 +1,4 @@
-package server
+package api
 
 import (
 	"context"
@@ -23,7 +23,7 @@ func InitTransactionsRpcServer(service *service.TransactionsService, streams *ma
 
 type TransactionsServer struct {
 	proto.UnimplementedTransactionServiceServer
-	service *service.TransactionsService
+	service service.TransactionServicer
 	mu      sync.Mutex
 	streams map[chan *proto.CreateTransactionResponse]struct{}
 }
@@ -34,6 +34,7 @@ func (s *TransactionsServer) GetTransactionById(ctx context.Context, req *proto.
 		return nil, err
 	}
 
+	fmt.Println(trx)
 	response, err := models.MapDbTransactionToRpcResponse(trx)
 	if err != nil {
 		return nil, nil

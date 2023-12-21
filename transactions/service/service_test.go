@@ -5,40 +5,75 @@ import (
 	mockdb "ecommerce/transactions/db/mock"
 	db "ecommerce/transactions/db/sqlc"
 	"ecommerce/transactions/models"
+	"ecommerce/transactions/utils"
 	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/mocks"
 )
 
 func TestCreateTransaction(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	query := mockdb.NewMockQuerier(ctrl)
 
+	tCilent := &mocks.Client{}
+	transactionsService := TransactionsService{Queries: query, TemporalClient: tCilent}
+
 	transactionRequest := models.CreateTransactionRequestModel{
 		CustomerID: "123",
 		ProductID:  "123",
 		Quantity:   4,
+		TotalPrice: 60,
 	}
 
 	fetchedCustomer := db.Customer{
 		ID: "123",
 	}
 
+	price, err := utils.Float32ToPgNumeric(15)
+	if err != nil {
+		return
+	}
+	fetchedProduct := db.Product{
+		ID:    "123",
+		Price: price,
+	}
+
+	// mocking queries
 	query.EXPECT().
-		GetCustomerById(gomock.Any(), gomock.Eq(transactionRequest.CustomerID)).
+		GetCustomerById(gomock.Any(), "123").
 		Times(1).
 		Return(fetchedCustomer, nil)
 
-	fetchedProduct := db.Product{
-		ID: "123",
-	}
 	query.EXPECT().
 		GetProductById(gomock.Any(), gomock.Eq(transactionRequest.ProductID)).
 		Times(1).
 		Return(fetchedProduct, nil)
 
+	// mocking workflow
+	wfRun := &mocks.WorkflowRun{}
+	options := client.StartWorkflowOptions{
+		ID:        "transactions-queue",
+		TaskQueue: "transactions-queue",
+	}
+
+	tCilent.On("ExecuteWorkflow", context.Background(), options, mock.AnythingOfType("func(internal.Context, models.CreateTransactionRequestModel, db.Product, db.Customer) (db.Transaction, error)"),
+		transactionRequest, fetchedProduct, fetchedCustomer).Return(wfRun, nil)
+
+	createdTransaction := db.Transaction{}
+	wfRun.On("Get", mock.Anything, &createdTransaction).Return(nil)
+
+	// calling the function
+	res, err := transactionsService.CreateTransaction(context.Background(), transactionRequest)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+	assert.Empty(t, res)
 }
 
 func TestGetTransactionById(t *testing.T) {
