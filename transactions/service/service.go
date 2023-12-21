@@ -25,8 +25,7 @@ type TransactionsService struct {
 func (service *TransactionsService) GetTransactionById(ctx context.Context, id string) (db.Transaction, error) {
 	trx, err := service.Queries.GetTransactionById(ctx, id)
 	if err != nil {
-		// TODO: return not found
-		return db.Transaction{}, err
+		return db.Transaction{}, errors.New("transaction not found")
 	}
 
 	return trx, err
@@ -35,12 +34,12 @@ func (service *TransactionsService) GetTransactionById(ctx context.Context, id s
 func (service *TransactionsService) CreateTransaction(ctx context.Context, transactionData models.CreateTransactionRequestModel) (db.Transaction, error) {
 	customer, err := service.Queries.GetCustomerById(ctx, transactionData.CustomerID)
 	if err != nil {
-		return db.Transaction{}, errors.New("customer Not found")
+		return db.Transaction{}, errors.New("customer not found")
 	}
 
 	product, err := service.Queries.GetProductById(ctx, transactionData.ProductID)
 	if err != nil {
-		return db.Transaction{}, errors.New("product Not found")
+		return db.Transaction{}, errors.New("product not found")
 	}
 
 	productPrice, err := utils.PgNumericToFloat32(product.Price)

@@ -7,6 +7,7 @@ import (
 	"ecommerce/transactions/proto"
 	"ecommerce/transactions/service"
 	"ecommerce/transactions/utils"
+	"os"
 
 	workflow "ecommerce/transactions/workflow"
 	"fmt"
@@ -70,7 +71,7 @@ func main() {
 	go startTemporalWorker(c, queries)
 
 	transactionsService := &service.TransactionsService{Queries: queries, TemporalClient: c}
-	lis, err := net.Listen("tcp", "127.0.0.1:8080")
+	lis, err := net.Listen("tcp", os.Getenv("TRANSACTIONS_SERVICE_IP"))
 	if err != nil {
 		log.Fatal("failed to listen, error: ", err)
 	}

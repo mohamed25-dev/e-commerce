@@ -8,6 +8,7 @@ import (
 	"ecommerce/transactions/models"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
@@ -36,8 +37,7 @@ func (a *TransactionActivity) CreateTransactionActivity(ctx context.Context, dat
 }
 
 func (a *TransactionActivity) SendTransactionToAnalyticsActivity(ctx context.Context, createdTransaction models.CreateAnalyticsTransactionRequestModel) error {
-	//TODO: use env variables
-	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(os.Getenv("ANALYTICS_SERVICE_IP"), grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Println("connection failed: ", err)
 	}

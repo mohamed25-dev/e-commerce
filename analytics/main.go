@@ -6,9 +6,9 @@ import (
 	db "ecommerce/analytics/db/sqlc"
 	"ecommerce/analytics/service"
 	"ecommerce/transactions/utils"
-	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
@@ -25,8 +25,6 @@ func main() {
 	if err != nil {
 		log.Fatal("could not get DB connection string, err: ", err)
 	}
-
-	fmt.Println(connStr)
 
 	// Create a connection pool
 	config, err := pgx.ParseConfig(connStr)
@@ -57,8 +55,7 @@ func main() {
 
 	events.On("transaction_created", analyticsService.HandleTransactionCreatedEvent)
 
-	//TODO: use env variables
-	lis, err := net.Listen("tcp", "127.0.0.1:8081")
+	lis, err := net.Listen("tcp", os.Getenv("ANALYTICS_SERVICE_IP"))
 	if err != nil {
 		log.Fatal("failed to listen, error: ", err)
 	}
