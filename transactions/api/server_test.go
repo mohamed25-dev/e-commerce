@@ -28,7 +28,6 @@ func (m *MockTransactionsService) CreateTransaction(ctx context.Context, transac
 }
 
 func TestGetTransactionById(t *testing.T) {
-
 	request := &proto.GetTransactionByIdRequest{
 		Id: "123",
 	}

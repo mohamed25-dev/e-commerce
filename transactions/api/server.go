@@ -34,7 +34,6 @@ func (s *TransactionsServer) GetTransactionById(ctx context.Context, req *proto.
 		return nil, err
 	}
 
-	fmt.Println(trx)
 	response, err := models.MapDbTransactionToRpcResponse(trx)
 	if err != nil {
 		return nil, nil
