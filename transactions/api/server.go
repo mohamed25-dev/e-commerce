@@ -11,6 +11,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -31,12 +33,12 @@ type TransactionsServer struct {
 func (s *TransactionsServer) GetTransactionById(ctx context.Context, req *proto.GetTransactionByIdRequest) (*proto.GetTransactionByIdResponse, error) {
 	trx, err := s.service.GetTransactionById(ctx, req.Id)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	response, err := models.MapDbTransactionToRpcResponse(trx)
 	if err != nil {
-		return nil, nil
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	return response, nil
@@ -51,20 +53,19 @@ func (s *TransactionsServer) CreateTransaction(ctx context.Context, req *proto.C
 
 	createdTransaction, err := s.service.CreateTransaction(ctx, transactionData)
 	if err != nil {
-		fmt.Println("something went wrong while creating the transaction, err: ", err)
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	amount, err := utils.PgNumericToFloat32(createdTransaction.TotalPrice)
 	if err != nil {
 		fmt.Println("Something went wrong while converting string to number, err: ", err)
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "Something went wrong: %v", err)
 	}
 
 	var pgTimestamp pgtype.Timestamptz
 	if err := createdTransaction.CreatedAt.ScanTimestamptz(pgTimestamp); err != nil {
 		fmt.Println("Something went wrong while converting pgtype.Timestamps to time.Timestamps, err: ", err)
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	response := &proto.CreateTransactionResponse{

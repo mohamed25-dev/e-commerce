@@ -6,7 +6,7 @@ import (
 	"ecommerce/transactions/models"
 	"ecommerce/transactions/utils"
 	workflow "ecommerce/transactions/workflow"
-	"fmt"
+	"errors"
 	"log"
 
 	"go.temporal.io/sdk/client"
@@ -35,19 +35,16 @@ func (service *TransactionsService) GetTransactionById(ctx context.Context, id s
 func (service *TransactionsService) CreateTransaction(ctx context.Context, transactionData models.CreateTransactionRequestModel) (db.Transaction, error) {
 	customer, err := service.Queries.GetCustomerById(ctx, transactionData.CustomerID)
 	if err != nil {
-		fmt.Println("retrieving customer info failed, err: ", err)
-		return db.Transaction{}, err
+		return db.Transaction{}, errors.New("customer Not found")
 	}
 
 	product, err := service.Queries.GetProductById(ctx, transactionData.ProductID)
 	if err != nil {
-		fmt.Println("retrieving product info failed, err: ", err)
-		return db.Transaction{}, err
+		return db.Transaction{}, errors.New("product Not found")
 	}
 
 	productPrice, err := utils.PgNumericToFloat32(product.Price)
 	if err != nil {
-		fmt.Println("converting product price to float failed, err: ", err)
 		return db.Transaction{}, err
 	}
 
