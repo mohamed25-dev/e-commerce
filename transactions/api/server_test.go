@@ -18,10 +18,24 @@ type MockTransactionsService struct {
 }
 
 func (m *MockTransactionsService) GetTransactionById(ctx context.Context, id string) (db.Transaction, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(db.Transaction), args.Error(1)
+}
+
+func (m *MockTransactionsService) CreateTransaction(ctx context.Context, transactionData models.CreateTransactionRequestModel) (db.Transaction, error) {
+	args := m.Called(ctx, transactionData)
+	return args.Get(0).(db.Transaction), args.Error(1)
+}
+
+func TestGetTransactionById(t *testing.T) {
+
+	request := &proto.GetTransactionByIdRequest{
+		Id: "123",
+	}
 
 	val, err := utils.Float32ToPgNumeric(21)
 	if err != nil {
-		return db.Transaction{}, err
+		t.Fatal(err)
 	}
 
 	var expectedTransaction = db.Transaction{
@@ -31,30 +45,9 @@ func (m *MockTransactionsService) GetTransactionById(ctx context.Context, id str
 		Quantity:   2,
 		TotalPrice: val,
 	}
-
-	return expectedTransaction, nil
-}
-
-func (service *MockTransactionsService) CreateTransaction(ctx context.Context, transactionData models.CreateTransactionRequestModel) (db.Transaction, error) {
-	return db.Transaction{}, nil
-}
-
-func TestGetTransactionById(t *testing.T) {
-
-	request := &proto.GetTransactionByIdRequest{
-		Id: "123",
-	}
-
 	mockService := new(MockTransactionsService)
 
-	// ctrl := gomock.NewController(t)
-	// query := mockdb.NewMockQuerier(ctrl)
-
-	// query.EXPECT().
-	// 	GetTransactionById(gomock.Any(), expectedTransaction.ID).
-	// 	Times(1).
-	// 	Return(expectedTransaction, nil)
-	mockService.On("GetTransactionById", context.Background(), request.Id).Return("123", nil)
+	mockService.On("GetTransactionById", mock.Anything, request.Id).Return(expectedTransaction, nil)
 
 	server := &TransactionsServer{
 		service: mockService,
@@ -62,14 +55,12 @@ func TestGetTransactionById(t *testing.T) {
 		streams: make(map[chan *proto.CreateTransactionResponse]struct{}),
 	}
 
-	// server.service = mockService
-
 	response, err := server.GetTransactionById(context.Background(), request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 
-	mockService.AssertCalled(t, "GetTransactionById", mock.Anything, "your_transaction_id")
+	mockService.AssertCalled(t, "GetTransactionById", mock.Anything, request.Id)
 
 	mockService.AssertExpectations(t)
 }

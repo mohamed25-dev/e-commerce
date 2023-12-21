@@ -14,8 +14,6 @@ type TransactionWorkflow struct {
 }
 
 func (w *TransactionWorkflow) CreateTransactionWorkflow(ctx workflow.Context, data models.CreateTransactionRequestModel, product db.Product, customer db.Customer) (db.Transaction, error) {
-	// TODO: use DB transactions, so that we can rollback incase of failure
-	// or use temporal for the same purpose
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 1,
 	}
@@ -24,7 +22,6 @@ func (w *TransactionWorkflow) CreateTransactionWorkflow(ctx workflow.Context, da
 	var createdTransaction db.Transaction
 	err := workflow.ExecuteActivity(ctx, w.Activities.CreateTransactionActivity, data).Get(ctx, &createdTransaction)
 	if err != nil {
-		//TODO: rollback
 		return db.Transaction{}, err
 	}
 
@@ -36,7 +33,6 @@ func (w *TransactionWorkflow) CreateTransactionWorkflow(ctx workflow.Context, da
 
 	err = workflow.ExecuteActivity(ctx, w.Activities.SendTransactionToAnalyticsActivity, analyticsTransactionData).Get(ctx, nil)
 	if err != nil {
-		//TODO: rollback
 		return db.Transaction{}, err
 	}
 
