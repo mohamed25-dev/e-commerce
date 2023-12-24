@@ -10,7 +10,6 @@ import (
 	"os"
 
 	workflow "ecommerce/transactions/workflow"
-	"fmt"
 	"log"
 	"net"
 
@@ -39,7 +38,7 @@ func startTemporalWorker(c client.Client, q *db.Queries) error {
 }
 
 func main() {
-	err := godotenv.Load("../transactions/.env")
+	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
@@ -63,9 +62,11 @@ func main() {
 
 	queries := db.New(pool)
 
-	c, err := client.Dial(client.Options{})
+	c, err := client.Dial(client.Options{
+		HostPort: "host.docker.internal:7233",
+	})
 	if err != nil {
-		fmt.Println("Error while connecting to temporal")
+		log.Fatal("Error while connecting to temporal, err", err)
 	}
 	defer c.Close()
 	go startTemporalWorker(c, queries)

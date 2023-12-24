@@ -1,16 +1,19 @@
-TRANSACTIONS_DB_URL=postgresql://postgres:password@localhost:5432/transactions_db?sslmode=disable
-ANALYTICS_DB_URL=postgresql://postgres:password@localhost:5432/analytics_db?sslmode=disable
+TRANSACTIONS_DB_URL=postgresql://postgres:secret@localhost:5432/transactions_db?sslmode=disable
+ANALYTICS_DB_URL=postgresql://postgres:secret@localhost:5432/analytics_db?sslmode=disable
 
-prepare: postgres createdb migrateup seeddb
+prepare: network postgres createdb migrateup seeddb
+
+network:
+	-docker network create micronetwork
 
 postgres:
 	@echo "Creating a posrgres docker container"
-	docker run --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -d postgres:14-alpine
+	-docker run --name  postgres --network micronetwork -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=secret -d postgres:14-alpine
 
 createdb:
 	@echo "Creating the database"
-	docker exec -it postgres createdb --username=postgres --owner=postgres transactions_db
-	docker exec -it postgres createdb --username=postgres --owner=postgres analytics_db
+	-docker exec -it postgres createdb --username=postgres --owner=postgres transactions_db
+	-docker exec -it postgres createdb --username=postgres --owner=postgres analytics_db
 
 
 migrateup:

@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load("../analytics/.env")
+	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}

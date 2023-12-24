@@ -1,0 +1,23 @@
+version: '3'
+
+networks:
+  micronetwork:
+      external: true
+
+services:
+  transactions:
+    build:
+      context: .
+      dockerfile: ./deployment/transactions.dockerfile
+    ports:
+      - "8083:8083"
+    networks:
+      - micronetwork
+  analytics:
+    build:
+      context: .
+      dockerfile: ./deployment/analytics.dockerfile
+    ports:
+      - "8081:8081"
+    networks:
+      - micronetwork

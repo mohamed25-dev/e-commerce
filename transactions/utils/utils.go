@@ -10,15 +10,12 @@ import (
 
 func GetDbConnectionString() (string, error) {
 	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASS")
 	dbName := os.Getenv("DB_NAME")
 	host := os.Getenv("DB_HOST")
-	port, err := strconv.Atoi(os.Getenv("DB_PORT"))
-	if err != nil {
-		fmt.Printf("Error parsing port number: %v\n", err)
-		return "", err
-	}
+	port := os.Getenv("DB_PORT")
 
-	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable", host, port, user, dbName), nil
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbName), nil
 }
 
 func PgNumericToFloat32(pgNumber pgtype.Numeric) (float32, error) {

@@ -2,27 +2,22 @@ package main
 
 import (
 	"context"
-	"ecommerce/transactions/utils"
 	"fmt"
 	"log"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	err := godotenv.Load("transactions/.env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	user := "postgres"
+	password := "secret"
+	dbName := "transactions_db"
+	host := "localhost"
+	port := "5432"
 
-	connStr, err := utils.GetDbConnectionString()
-	if err != nil {
-		log.Fatal("could not get DB connection string, err: ", err)
-	}
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbName)
 
-	fmt.Println(connStr)
 	// Create a connection pool
 	config, err := pgx.ParseConfig(connStr)
 	if err != nil {
