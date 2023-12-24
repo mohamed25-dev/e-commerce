@@ -8,7 +8,7 @@ services:
   transactions:
     build:
       context: .
-      dockerfile: ./deployment/transactions.dockerfile
+      dockerfile: ./docker/transactions.dockerfile
     ports:
       - "8083:8083"
     networks:
@@ -16,7 +16,7 @@ services:
   analytics:
     build:
       context: .
-      dockerfile: ./deployment/analytics.dockerfile
+      dockerfile: ./docker/analytics.dockerfile
     ports:
       - "8081:8081"
     networks:

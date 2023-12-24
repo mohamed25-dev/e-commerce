@@ -2,6 +2,8 @@ TRANSACTIONS_DB_URL=postgresql://postgres:secret@localhost:5432/transactions_db?
 ANALYTICS_DB_URL=postgresql://postgres:secret@localhost:5432/analytics_db?sslmode=disable
 
 prepare: network postgres createdb migrateup seeddb
+run:
+	docker-compose up
 
 network:
 	-docker network create micronetwork
