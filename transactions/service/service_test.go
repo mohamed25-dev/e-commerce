@@ -76,6 +76,83 @@ func TestCreateTransaction(t *testing.T) {
 	assert.Empty(t, res)
 }
 
+func TestCreateTransaction_CustomerNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	query := mockdb.NewMockQuerier(ctrl)
+
+	tCilent := &mocks.Client{}
+	transactionsService := TransactionsService{Queries: query, TemporalClient: tCilent}
+
+	transactionRequest := models.CreateTransactionRequestModel{
+		CustomerID: "123",
+		ProductID:  "123",
+		Quantity:   4,
+		TotalPrice: 60,
+	}
+
+	price, err := utils.Float32ToPgNumeric(15)
+	if err != nil {
+		return
+	}
+	fetchedProduct := db.Product{
+		ID:    "123",
+		Price: price,
+	}
+
+	// mocking queries
+	query.EXPECT().
+		GetCustomerById(gomock.Any(), "123").
+		Times(1).
+		Return(db.Customer{}, errors.New("customer not found"))
+
+	query.EXPECT().
+		GetProductById(gomock.Any(), gomock.Eq(transactionRequest.ProductID)).
+		Times(0).
+		Return(fetchedProduct, nil)
+
+	// calling the function
+	res, err := transactionsService.CreateTransaction(context.Background(), transactionRequest)
+
+	assert.Error(t, err)
+	assert.Empty(t, res)
+}
+
+func TestCreateTransaction_ProductNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	query := mockdb.NewMockQuerier(ctrl)
+
+	tCilent := &mocks.Client{}
+	transactionsService := TransactionsService{Queries: query, TemporalClient: tCilent}
+
+	transactionRequest := models.CreateTransactionRequestModel{
+		CustomerID: "123",
+		ProductID:  "123",
+		Quantity:   4,
+		TotalPrice: 60,
+	}
+
+	fetchedCustomer := db.Customer{
+		ID: "123",
+	}
+
+	// mocking queries
+	query.EXPECT().
+		GetCustomerById(gomock.Any(), "123").
+		Times(1).
+		Return(fetchedCustomer, nil)
+
+	query.EXPECT().
+		GetProductById(gomock.Any(), gomock.Eq(transactionRequest.ProductID)).
+		Times(0).
+		Return(db.Product{}, errors.New("product not found"))
+
+	// calling the function
+	res, err := transactionsService.CreateTransaction(context.Background(), transactionRequest)
+
+	assert.Error(t, err)
+	assert.Empty(t, res)
+}
+
 func TestGetTransactionById(t *testing.T) {
 	transaction := db.Transaction{
 		ID: "123",
